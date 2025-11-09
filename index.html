@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Task Management App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #tasks {
+      margin-top: 20px;
+    }
+    .task {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Task Management App</h1>
+  <button onclick="loadTasks()">Load Tasks</button>
+
+  <div id="tasks"></div>
+
+  <script>
+    async function loadTasks() {
+      const response = await fetch('/tasks');
+      const data = await response.json();
+
+      const container = document.getElementById('tasks');
+      container.innerHTML = '';
+
+      data.forEach(task => {
+        const div = document.createElement('div');
+        div.className = 'task';
+        div.innerHTML = `<strong>${task.title}</strong><br>${task.description}<br>Status: ${task.status}`;
+        container.appendChild(div);
+      });
+    }
+  </script>
+
+</body>
+</html>
