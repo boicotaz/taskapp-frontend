@@ -79,6 +79,18 @@
 
 <main>
   <button onclick="loadTasks()">Load Tasks</button>
+  <h2>Create New Task</h2>
+  <div class="task">
+    <input type="text" id="new-title" placeholder="Title" />
+    <textarea id="new-desc" placeholder="Description"></textarea>
+    <select id="new-status">
+      <option value="todo">todo</option>
+      <option value="in_progress">in_progress</option>
+      <option value="done">done</option>
+    </select>
+    <button onclick="createTask()">Create Task</button>
+  </div>
+  <hr />
   <div id="tasks"></div>
 </main>
 
@@ -158,6 +170,39 @@
       alert('Failed to update task');
       return;
     }
+
+    loadTasks();
+  }
+  
+  async function createTask() {
+    const title = document.getElementById('new-title').value;
+    const description = document.getElementById('new-desc').value;
+    const status = document.getElementById('new-status').value;
+
+    if (!title) {
+      alert('Title is required');
+      return;
+    }
+
+    const response = await fetch('/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        description,
+        status
+      })
+    });
+
+    if (!response.ok) {
+      alert('Failed to create task');
+      return;
+    }
+
+    // Reset form
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-desc').value = '';
+    document.getElementById('new-status').value = 'todo';
 
     loadTasks();
   }
