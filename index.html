@@ -17,12 +17,6 @@
       color: white;
       padding: 20px;
       text-align: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 2rem;
     }
 
     main {
@@ -35,19 +29,19 @@
       background-color: #007BFF;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 1rem;
-      margin-bottom: 20px;
+      font-size: 0.9rem;
+      margin-right: 5px;
+    }
+
+    button.secondary {
+      background-color: #6c757d;
     }
 
     button:hover {
-      background-color: #0056b3;
-    }
-
-    #tasks {
-      margin-top: 20px;
+      opacity: 0.9;
     }
 
     .task {
@@ -56,11 +50,10 @@
       border-radius: 4px;
       margin-bottom: 10px;
       background-color: #fff;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .task strong {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       color: #007BFF;
     }
 
@@ -68,48 +61,107 @@
       margin: 5px 0;
     }
 
-    footer {
-      text-align: center;
-      padding: 10px;
-      background-color: #f4f4f9;
-      color: #666;
-      border-top: 1px solid #ddd;
-      margin-top: 20px;
+    .task input,
+    .task textarea,
+    .task select {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 6px;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Task Management App</h1>
-  </header>
+<header>
+  <h1>Task Management App</h1>
+</header>
 
-  <main>
-    <button onclick="loadTasks()">Load Tasks</button>
+<main>
+  <button onclick="loadTasks()">Load Tasks</button>
+  <div id="tasks"></div>
+</main>
 
-    <div id="tasks"></div>
-  </main>
+<script>
+  let tasks = [];
 
-  <footer>
-    <p>&copy; 2025 Task Management App. All rights reserved.</p>
-  </footer>
+  async function loadTasks() {
+    const response = await fetch('/tasks');
+    tasks = await response.json();
+    renderTasks();
+  }
 
-  <script>
-    async function loadTasks() {
-      const response = await fetch('/tasks');
-      const data = await response.json();
+  function renderTasks() {
+    const container = document.getElementById('tasks');
+    container.innerHTML = '';
 
-      const container = document.getElementById('tasks');
-      container.innerHTML = '';
+    tasks.forEach(task => {
+      container.appendChild(createTaskElement(task));
+    });
+  }
 
-      data.forEach(task => {
-        const div = document.createElement('div');
-        div.className = 'task';
-        div.innerHTML = `<strong>${task.title}</strong><p>${task.description}</p><p>Status: ${task.status}</p>`;
-        container.appendChild(div);
-      });
+  function createTaskElement(task) {
+    const div = document.createElement('div');
+    div.className = 'task';
+
+    div.innerHTML = `
+      <div class="view-mode">
+        <strong>${task.title}</strong>
+        <p>${task.description}</p>
+        <p>Status: ${task.status}</p>
+        <button onclick="enterEditMode(${task.id})">Edit</button>
+      </div>
+
+      <div class="edit-mode" style="display:none;">
+        <input type="text" value="${task.title}" id="title-${task.id}" />
+        <textarea id="desc-${task.id}">${task.description}</textarea>
+        <select id="status-${task.id}">
+          <option value="todo">todo</option>
+          <option value="in_progress">in_progress</option>
+          <option value="done">done</option>
+        </select>
+        <button onclick="saveTask(${task.id})">Save</button>
+        <button class="secondary" onclick="loadTasks()">Cancel</button>
+      </div>
+    `;
+
+    div.querySelector(`#status-${task.id}`).value = task.status;
+
+    return div;
+  }
+
+  function enterEditMode(taskId) {
+    const taskDiv = [...document.getElementsByClassName('task')]
+      .find(div => div.innerHTML.includes(`enterEditMode(${taskId})`));
+
+    taskDiv.querySelector('.view-mode').style.display = 'none';
+    taskDiv.querySelector('.edit-mode').style.display = 'block';
+  }
+
+  async function saveTask(taskId) {
+    const title = document.getElementById(`title-${taskId}`).value;
+    const description = document.getElementById(`desc-${taskId}`).value;
+    const status = document.getElementById(`status-${taskId}`).value;
+
+    const response = await fetch('/tasks', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: taskId,
+        title,
+        description,
+        status
+      })
+    });
+
+    if (!response.ok) {
+      alert('Failed to update task');
+      return;
     }
-  </script>
+
+    loadTasks();
+  }
+</script>
 
 </body>
 </html>
